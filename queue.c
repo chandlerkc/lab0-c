@@ -141,7 +141,6 @@ bool q_delete_dup(struct list_head *head)
 
     struct list_head *cur = head->next;
     struct list_head *next = NULL;
-    struct list_head **pptr = &head->next;
     char pre_val[1024] = {0};
     char cur_val[1024] = {0};
     char next_val[1024] = {0};
@@ -160,11 +159,8 @@ bool q_delete_dup(struct list_head *head)
             next_val[0] = '\0';
         }
 
-        if (strncmp(pre_val, cur_val, strlen(cur_val)) != 0 &&
-            strncmp(cur_val, next_val, strlen(cur_val)) != 0) {
-            *pptr = cur;
-            pptr = &cur->next;
-        } else {
+        if (strncmp(pre_val, cur_val, strlen(cur_val)) == 0 ||
+            strncmp(cur_val, next_val, strlen(cur_val)) == 0) {
             list_del_init(cur);
             element_t *element_node_del = list_entry(cur, element_t, list);
             q_release_element(element_node_del);
@@ -173,7 +169,6 @@ bool q_delete_dup(struct list_head *head)
         strncpy(pre_val, cur_val, strlen(cur_val));
         cur = next;
     }
-    *pptr = head;
 
     return true;
 }
@@ -181,16 +176,53 @@ bool q_delete_dup(struct list_head *head)
 /* Swap every two adjacent nodes */
 void q_swap(struct list_head *head)
 {
-    // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (!head || list_empty(head))
+        return;
+    struct list_head *pre = head;
+    struct list_head *cur = head->next;
+    struct list_head *next = cur->next;
+
+    while (cur != head && next != head) {
+        list_del_init(next);
+        list_add(next, pre);
+
+        pre = cur;
+        cur = cur->next;
+        next = cur->next;
+    }
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+
+    struct list_head *cur = head->next;
+    struct list_head *next = NULL;
+    while (cur != head) {
+        next = cur->next;
+        list_del_init(cur);
+        list_add(cur, head);
+        cur = next;
+    }
+}
 
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
 {
-    // https://leetcode.com/problems/reverse-nodes-in-k-group/
+    if (!head || list_empty(head))
+        return;
+    struct list_head *cur = head->next;
+    struct list_head *next = NULL;
+    int count = 0;
+    while (cur != head && count < k) {
+        next = cur->next;
+        list_del_init(cur);
+        list_add(cur, head);
+        cur = next;
+        count++;
+    }
 }
 
 /* Sort elements of queue in ascending/descending order */
@@ -200,16 +232,60 @@ void q_sort(struct list_head *head, bool descend) {}
  * the right side of it */
 int q_ascend(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head) || list_is_singular(head))
+        return q_size(head);
+    char max_string[1024] = {0};
+    struct list_head *cur = head->next;
+    struct list_head *next = NULL;
+
+    while (cur != head) {
+        next = cur->next;
+        element_t *element_node_cur = list_entry(cur, element_t, list);
+        if (strcmp(max_string, element_node_cur->value) <=
+            0) /*max_string is less or equal than cur string*/
+        {
+            strncpy(max_string, element_node_cur->value,
+                    strlen(element_node_cur->value));
+        } else /*max_string is greater then the cur string*/
+        {
+            list_del_init(cur);
+            q_release_element(element_node_cur);
+        }
+        cur = next;
+    }
+
+
+    return q_size(head);
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
 int q_descend(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head) || list_is_singular(head))
+        return q_size(head);
+    char max_string[1024] = {0};
+    struct list_head *cur = head->prev;
+    struct list_head *next = NULL;
+
+    while (cur != head) {
+        next = cur->prev;
+        element_t *element_node_cur = list_entry(cur, element_t, list);
+        if (strcmp(max_string, element_node_cur->value) <=
+            0) /*max_string is less or equal than cur string*/
+        {
+            strncpy(max_string, element_node_cur->value,
+                    strlen(element_node_cur->value));
+        } else /*max_string is greater then the cur string*/
+        {
+            list_del_init(cur);
+            q_release_element(element_node_cur);
+        }
+        cur = next;
+    }
+
+
+    return q_size(head);
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
