@@ -226,7 +226,71 @@ void q_reverseK(struct list_head *head, int k)
 }
 
 /* Sort elements of queue in ascending/descending order */
-void q_sort(struct list_head *head, bool descend) {}
+struct list_head *mergeTwoLists(struct list_head *list1,
+                                struct list_head *list2,
+                                struct list_head *head,
+                                bool descend)
+{
+    struct list_head *ret = NULL;
+    struct list_head *prev = head;
+    struct list_head **ptr = &ret;
+    for (; list1 != head && list2 != head; ptr = &(*ptr)->next) {
+        element_t *element_node1 = list_entry(list1, element_t, list);
+        element_t *element_node2 = list_entry(list2, element_t, list);
+
+        int compare_result = strcmp(element_node1->value, element_node2->value);
+        if (descend)
+            compare_result *= -1;
+
+        if (compare_result < 0) {
+            *ptr = list1;
+            list1->prev = prev;
+            prev = list1;
+            list1 = list1->next;
+        } else {
+            *ptr = list2;
+            list2->prev = prev;
+            prev = list2;
+            list2 = list2->next;
+        }
+    }
+
+    if (list1 == head) {
+        *ptr = list2;
+        list2->prev = prev;
+    } else {
+        *ptr = list1;
+        list2->prev = prev;
+    }
+
+    return ret;
+}
+
+struct list_head *sortList(struct list_head *node,
+                           struct list_head *head,
+                           bool descend)
+{
+    if (node == head || node->next == head)
+        return node;
+    struct list_head *slow = node;
+    struct list_head *fast = node->next;
+    while (fast != head && fast->next != head) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    struct list_head *list1 = sortList(slow->next, head, descend);
+    slow->next = head;
+    struct list_head *list2 = sortList(node, head, descend);
+
+    return mergeTwoLists(list1, list2, head, descend);
+}
+void q_sort(struct list_head *head, bool descend)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+    head->next = sortList(head->next, head, descend);
+}
 
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
