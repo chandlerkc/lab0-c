@@ -193,19 +193,22 @@ void q_swap(struct list_head *head)
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head)
+void q_reverse_range(struct list_head *head, struct const list_head *tail)
 {
-    if (!head || list_empty(head))
-        return;
-
     struct list_head *cur = head->next;
     struct list_head *next = NULL;
-    while (cur != head) {
+    while (cur != tail) {
         next = cur->next;
         list_del_init(cur);
         list_add(cur, head);
         cur = next;
     }
+}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+    q_reverse_range(head, head);
 }
 
 /* Reverse the nodes of the list k at a time */
@@ -213,15 +216,16 @@ void q_reverseK(struct list_head *head, int k)
 {
     if (!head || list_empty(head))
         return;
-    struct list_head *cur = head->next;
-    struct list_head *next = NULL;
+
     int count = 0;
-    while (cur != head && count < k) {
-        next = cur->next;
-        list_del_init(cur);
-        list_add(cur, head);
-        cur = next;
+    struct list_head *start = head;
+    struct list_head *node = NULL, *safe = NULL;
+    list_for_each_safe (node, safe, head) {
         count++;
+        if (count % k == 0) {
+            q_reverse_range(start, safe);
+            start = safe->prev;
+        }
     }
 }
 
