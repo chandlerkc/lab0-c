@@ -226,15 +226,16 @@ void q_reverseK(struct list_head *head, int k)
 }
 
 /* Sort elements of queue in ascending/descending order */
+/*need to break list1 and list2 from circular list to oneway list first*/
 struct list_head *mergeTwoLists(struct list_head *list1,
                                 struct list_head *list2,
-                                struct list_head *head,
+                                struct list_head **tail,
                                 bool descend)
 {
     struct list_head *ret = NULL;
-    struct list_head *prev = head;
+    struct list_head *prev = NULL;
     struct list_head **ptr = &ret;
-    for (; list1 != head && list2 != head; ptr = &(*ptr)->next) {
+    for (; list1 != NULL && list2 != NULL; ptr = &(*ptr)->next) {
         element_t *element_node1 = list_entry(list1, element_t, list);
         element_t *element_node2 = list_entry(list2, element_t, list);
 
@@ -255,41 +256,52 @@ struct list_head *mergeTwoLists(struct list_head *list1,
         }
     }
 
-    if (list1 == head) {
+    if (list1 == NULL) {
         *ptr = list2;
         list2->prev = prev;
+        *tail = list2;
     } else {
         *ptr = list1;
-        list2->prev = prev;
+        list1->prev = prev;
+        *tail = list1;
     }
-
+    while ((*tail)->next != NULL)
+        *tail = (*tail)->next;
     return ret;
 }
 
 struct list_head *sortList(struct list_head *node,
-                           struct list_head *head,
+                           struct list_head **tail,
                            bool descend)
 {
-    if (node == head || node->next == head)
+    if (node == NULL || node->next == NULL)
         return node;
     struct list_head *slow = node;
     struct list_head *fast = node->next;
-    while (fast != head && fast->next != head) {
+    while (fast != NULL && fast->next != NULL) {
         slow = slow->next;
         fast = fast->next->next;
     }
 
-    struct list_head *list1 = sortList(slow->next, head, descend);
-    slow->next = head;
-    struct list_head *list2 = sortList(node, head, descend);
+    struct list_head *list1 = sortList(slow->next, tail, descend);
+    slow->next = NULL;
+    struct list_head *list2 = sortList(node, tail, descend);
 
-    return mergeTwoLists(list1, list2, head, descend);
+    return mergeTwoLists(list1, list2, tail, descend);
 }
 void q_sort(struct list_head *head, bool descend)
 {
     if (!head || list_empty(head) || list_is_singular(head))
         return;
-    head->next = sortList(head->next, head, descend);
+
+    head->prev->next = NULL;  // break the circular list at first
+
+    struct list_head *tail = NULL;
+    struct list_head *ret = sortList(head->next, &tail, descend);
+    head->next = ret;
+    ret->prev = head;
+    head->prev = tail;
+    tail->next = head;
 }
 
 /* Remove every node which has a node with a strictly less value anywhere to
@@ -356,6 +368,42 @@ int q_descend(struct list_head *head)
  * order */
 int q_merge(struct list_head *head, bool descend)
 {
-    // https://leetcode.com/problems/merge-k-sorted-lists/
+    if (!head || list_empty(head))
+        return 0;
+
     return 0;
+    /** struct list_head *forward = head->next; */
+    /** struct list_head *backward = head->prev; */
+    /** while(head->next != head->prev) */
+    /** { */
+    /**     while(forward!=backward && forward!=head && backward!=head) */
+    /**     { */
+    /**         queue_contex_t *forward_head = list_entry(forward,
+     * queue_contex_t, chain); */
+    /**         queue_contex_t *backward_head = list_entry(backward,
+     * queue_contex_t, chain); */
+    /**         struct list_head *head1 = forward_head->q; */
+    /**         struct list_head *head2 = backward_head->q; */
+    /**         struct list_head *list1 = head1->next; */
+    /**         struct list_head *list2 = head2->next; */
+    /**         struct list_head *merge = mergeTwoLists(list1, list2, head1,
+     * head2, descend);  */
+    /**         forward_head->q->next = merge; */
+    /**         merge->prev = forward_head->q; */
+    /**  */
+    /**         struct list_head *del = backward; */
+    /**  */
+    /**         backward = backward->prev; */
+    /**         forward = forward->next; */
+    /**  */
+    /**         list_del_init(del); */
+    /**     } */
+    /**  */
+    /** } */
+    /**  */
+    /** struct list_head *first = head->next; */
+    /** queue_contex_t *first_head = list_entry(first, queue_contex_t, chain);
+     */
+    /**  */
+    /** return q_size(first_head->q); */
 }
