@@ -193,7 +193,7 @@ void q_swap(struct list_head *head)
 }
 
 /* Reverse elements in queue */
-void q_reverse_range(struct list_head *head, struct const list_head *tail)
+void q_reverse_range(struct list_head *head, struct list_head const *tail)
 {
     struct list_head *cur = head->next;
     struct list_head *next = NULL;
