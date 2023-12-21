@@ -371,39 +371,35 @@ int q_merge(struct list_head *head, bool descend)
     if (!head || list_empty(head))
         return 0;
 
-    return 0;
-    /** struct list_head *forward = head->next; */
-    /** struct list_head *backward = head->prev; */
-    /** while(head->next != head->prev) */
-    /** { */
-    /**     while(forward!=backward && forward!=head && backward!=head) */
-    /**     { */
-    /**         queue_contex_t *forward_head = list_entry(forward,
-     * queue_contex_t, chain); */
-    /**         queue_contex_t *backward_head = list_entry(backward,
-     * queue_contex_t, chain); */
-    /**         struct list_head *head1 = forward_head->q; */
-    /**         struct list_head *head2 = backward_head->q; */
-    /**         struct list_head *list1 = head1->next; */
-    /**         struct list_head *list2 = head2->next; */
-    /**         struct list_head *merge = mergeTwoLists(list1, list2, head1,
-     * head2, descend);  */
-    /**         forward_head->q->next = merge; */
-    /**         merge->prev = forward_head->q; */
-    /**  */
-    /**         struct list_head *del = backward; */
-    /**  */
-    /**         backward = backward->prev; */
-    /**         forward = forward->next; */
-    /**  */
-    /**         list_del_init(del); */
-    /**     } */
-    /**  */
-    /** } */
-    /**  */
-    /** struct list_head *first = head->next; */
-    /** queue_contex_t *first_head = list_entry(first, queue_contex_t, chain);
-     */
-    /**  */
-    /** return q_size(first_head->q); */
+    struct list_head *forward = NULL;
+    struct list_head *backward = head->prev;
+    struct list_head *tail = NULL;
+    while (backward != head->next) {
+        forward = head->next;
+        while (forward != backward && backward->next != forward) {
+            queue_contex_t *forward_head =
+                list_entry(forward, queue_contex_t, chain);
+            queue_contex_t *backward_head =
+                list_entry(backward, queue_contex_t, chain);
+            struct list_head *head1 = forward_head->q;
+            struct list_head *head2 = backward_head->q;
+            head1->prev->next = NULL;  // break the cicular first
+            head2->prev->next = NULL;
+            struct list_head *list1 = head1->next;
+            struct list_head *list2 = head2->next;
+            struct list_head *ret = mergeTwoLists(list1, list2, &tail, descend);
+            head1->next = ret;
+            ret->prev = head1;
+            head1->prev = tail;
+            tail->next = head1;
+
+            INIT_LIST_HEAD(backward_head->q);
+            backward = backward->prev;
+            forward = forward->next;
+        }
+    }
+
+    struct list_head *first = head->next;
+    queue_contex_t *first_head = list_entry(first, queue_contex_t, chain);
+    return q_size(first_head->q);
 }
